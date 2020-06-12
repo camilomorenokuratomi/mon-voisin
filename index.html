@@ -1,0 +1,999 @@
+<!doctype html> 
+<html>
+<head>
+	<title>Combien gagne mon voisin ? </title>
+		<link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet"> 
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.10/angular.min.js"></script>
+		<script src="ui-bootstrap-tpls-0.10.0.min.js"></script>
+		<script src="cities.js"></script>
+		<script src="work_men.js"></script>
+		<script src="work_women.js"></script>
+		<meta property="og:title" content="Je sais combien gagne mon voisin, et toi ? Tente l'expérience sur l'appli qui décrypte les inégalités de salaires http://goo.gl/oQj42x" />
+		<meta property="og:type" content="Sharing Widgets" />
+		<meta property="og:url" content="http://combiengagnemonvoisin.com" />
+		<meta property="og:image" content="http://combiengagnemonvoisin.com/voisin1.png" />
+		<meta property="og:description" content="La web app Combien gagne mon voisin ? décrypte et compare les inégalités de salaires selon l'âge le sexe, le métier et la ville." />
+		<meta property="og:site_name" content="Combien gagne mon voisin" />
+		<script type="text/javascript">var switchTo5x=true;</script>
+		<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+		<script type="text/javascript" src="http://s.sharethis.com/loader.js"></script>
+		<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+		<script type="text/javascript">
+		        stLight.options({
+		                publisher:'12345',
+		        });
+		</script>
+
+	 	<link rel="stylesheet" type="text/css" href="style.css">
+	 	<link href='http://fonts.googleapis.com/css?family=Francois+One' rel='stylesheet' type='text/css'>
+	 	<link href='http://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
+ 		<meta charset="utf-8"> 
+
+	    <script type='text/javascript'>
+
+	    	angular.module('app', ['ui.bootstrap']);
+
+	        function MyCtrl($scope, $http) {
+	        	$scope.name = "";
+	        	$scope.step = 1;
+	        	$scope.sex  = "Monsieur";
+	        	$scope.sex_change  = "Monsieur";
+	        	// Variables chargées dynamiquement
+	        	$scope.cities = window.cities;
+	        	
+	        	$scope.works = function() {
+	        		if($scope.sex == "Monsieur") {
+	        			return window.work_men;
+	        		} else {	        			
+	        			return window.work_women;
+	        		}
+	        	}
+	        	$scope.cities_change = window.cities;
+	        	$scope.works_change = function() {
+	        		if($scope.sex == "Monsieur") {
+	        			return window.work_men;
+	        		} else {	        			
+	        			return window.work_women;
+	        		}
+	        	};
+
+
+	        	$scope.get_salary = function() {
+
+	        		var sex = $scope.sex == "Monsieur" ? "male" : "female";
+	        		$scope.step = 5; 
+
+				    $http.get("http://edj-cgvv.herokuapp.com/" + $scope.work.id + "/" + sex + "/" + $scope.age + "/" + $scope.city.insee_com).success(function(data) {  
+				    	if(typeof data.salary != "undefined" && data.salary > 0) {
+					        $scope.salary = Math.round(data.salary/12, 2);
+					        // Pour enregistrer la catégorie en cours
+					        $scope.spo = data.spo;		
+				    		$scope.unknownProfile = false;			    		
+				    	}  else {
+				    		$scope.unknownProfile = true;
+				    	}
+				    });
+	        	};
+	     
+
+	        	$scope.get_salary2 = function() {
+
+	        		var sex = $scope.sex_change == "Monsieur" ? "male" : "female";
+	        		$scope.step = 6; 
+
+				    $http.get("http://edj-cgvv.herokuapp.com/" + $scope.work_change.id + "/" + sex + "/" + $scope.age_change + "/" + $scope.city_change.insee_com).success(function(data) {
+				    	if(typeof data.salary != "undefined" && data.salary > 0) {
+					        $scope.salary2 = Math.round(data.salary/12, 2);
+					        // Pour enregistrer la catégorie en cours
+					        $scope.spo_change = data.spo;		
+				    		$scope.unknownProfile2 = false;			    		
+				    	}  else {
+				    		$scope.unknownProfile2 = true;
+				    	}
+
+				    });
+	        	};
+
+
+	        	$scope.$watch("step", function(step) {
+	        		if(step <= 0 ) $scope.step = 1
+	        		if(step >= 6 ) $scope.step = 6
+	        	});
+
+	        	$scope.$watch("sex", function(val) {
+	        		$scope.sex_change = val
+	        	});
+	        	$scope.$watch("work", function(val) {
+	        		$scope.work_change = val
+	        	});
+	        	$scope.$watch("age", function(val) {
+	        		$scope.age_change = val
+	        	});
+	        	$scope.$watch("city", function(val) {
+	        		$scope.city_change = val
+	        	});
+	        	$scope.$watch("spo", function(val) {
+	        		$scope.spo_change = val
+	        	});
+
+	        	$scope.$watchCollection("[city_change, age_change, sex_change, work_change]", function(val) {
+	        		if($scope.step == 6) {
+	        			$scope.step = 5
+	        		}
+	        	});
+
+	        	$scope.getSpoImg = function(sex, spo) {
+ 					
+ 					sex = sex == "Monsieur" ? "homme" : "femme";
+
+
+	        		var spoImg = {
+					    "1": "images/" + sex + "agriculteur.png",
+					    "2": "images/" + sex + "artisan.png",
+					    "3": "images/" + sex + "cadre.png",
+					    "4": "images/" + sex + "intermediaire.png",
+					    "5": "images/" + sex + "employe.png",
+					    "61": "images/" + sex + "ouvrier.png",
+					    "62": "images/" + sex + "ouvrier.png",
+					};
+
+
+					return spoImg[spo];
+					
+	        	};
+	        }
+	    </script>
+
+		<link rel="icon" type="image/png" href="images/favicon.png" />
+		<!--[if IE]><link rel="shortcut icon" type="image/x-icon" href="favicon.ico" /><![endif]-->
+
+	
+</head>
+<body ng-app="app">
+	<div id="header">
+		<div class="text-center font-effect-shadow-multiple">
+			<h1>Combien gagne mon voisin ?</h1>
+		</div>
+		<div class="LogosReseaux">
+			<a href="https://twitter.com/search?q=%23CombienGagneMonVoisin&src=typd&f=realtime" target="_blank">#CombienGagneMonVoisin</a> <a href="https://twitter.com/Mon_voisin" target="_blank"><img src="http://www.flaticon.com/png/256/8800.png" style="width: 2%"></a> <a href="http://www.facebook.com/sitecombiengagnemonvoisin" target="_blank"><img src="http://www.flaticon.com/png/256/44646.png" style="width: 2%"></a>
+		</div>
+	</div>
+
+	</br>
+	
+	
+	<div id="stepbystep" ng-controller='MyCtrl'>
+		<div class="container" >
+
+			<div class="text-center" ng-show="step < 5"><img src="logo.png" style="width: 60%; height: 60%"/></div>
+				
+				<form class="well" ng-show="step == 1" ng-submit="step = step + 1"> 
+
+					<div class="text-center">
+						<h2>Donnez un nom à votre voisin</h2>
+						<br> 
+						<select class="btn btn-default" ng-model="sex">				
+			  				<option value="Monsieur">Monsieur</option>
+			  				<option value="Madame">Madame</option>
+			  			</select>    
+			  			<input class ="remplir" onClick="select()" required ng-model="name" autofocus placeholder="Donnez un nom au voisin"/>
+			  		</br>
+			  		</br>
+			  			Etape {{step}}/4
+			  		</div>
+			  	</form>  
+
+			  	<form class="well" ng-show="step == 2"  ng-submit="step = step + 1">
+					<div class="text-center">
+						<h2>Quelle est la profession de {{sex}} {{name}} ?</h2> 
+						<br> 
+										 
+			  			<input class ="remplir" onClick="select()" required ng-model="$parent.work" typeahead-min-length="3" typeahead="work as work.label for work in works() | filter:{label: $viewValue}" autofocus placeholder="Indiquez un métier" tooltip-placement="right" tooltip="Sélectionnez un métier de notre base de données avant de continuer"/>
+			  		</br>
+			  		</br>
+			  			Etape {{step}}/4
+			  		</div>
+			  	</form>
+
+			  	<form class="well" ng-show="step == 3"  ng-submit="step = step + 1">
+			  		<div class="text-center">
+			  			<h2>Quel est l'âge de {{sex}} {{name}}, {{work.label}} ?</h2> <br> 
+			  			<form class="form-inline" role="form">
+				  			<div class="form-group">
+					  			<input class ="remplir" onClick="select()" required ng-model="age" autofocus placeholder="Indiquez un chiffre"/>
+			  					</br>
+			  					Etape {{step}}/4			
+				  			</div>
+						</form>
+
+			  		</div>
+			  	</form>  
+
+			  	<form class="well" ng-show="step == 4"  ng-submit="get_salary()">
+			  		<div class="text-center">
+			  			<h2>Où habite {{sex}} {{name}}, {{age}} ans, {{work.label}} ?</h2> 
+			  			<br> 
+					  	
+					  	<input class ="remplir" onClick="select()" ng-model="$parent.city" typeahead-min-length="3" typeahead="city as city.nom_comm for city in cities | filter:{nom_comm: $viewValue}" required autofocus placeholder="Indiquez une ville" tooltip-placement="right" tooltip="Sélectionnez une des communes de notre basse de donnés avant de continuer"/>
+			  		</br>
+			  		</br>
+			  			Etape {{step}}/4
+
+			  		</div>
+			  	</form>
+
+			  	<!--Boutons formulaire 1-->
+
+				<div class="text-center">						
+					<button class="large" 
+							ng-show="step > 1 && step <= 4" 
+							type="button"
+							ng-click="step = step - 1">Revenir à l'etape précédente</button>
+					<button class="large" 
+							ng-show="step < 4"
+							type="button"
+							ng-disabled="(step == 1 && !name) || (step == 2 && !work) || (step == 3 && !age)" 
+							ng-click="step = step + 1">Passer à l'etape suivante</button>
+					<button class="large" 
+							type="button"
+							ng-show="step == 4"
+							ng-disabled="step == 4 && !city"							
+							ng-click="get_salary()">Obtenir le résultat</button>
+					<br/>			
+				</div>
+
+
+				<!--DEBUT DE LA PAGE RESULTATS-->
+
+				<div class="row-fluid" ng-show="step >= 5">
+					<br>
+					<!--Fenêtre résultats 1-->
+					<div class="well2 col-md-4 text-center">
+						<div id="background">
+							<h3>
+								Le salaire mensuel de {{sex}} {{name}}, {{age}} ans, {{work.label}} à {{city.nom_comm}} est d'environ 
+								<br> 
+								<br> 
+								<div ng-show="!unknownProfile" class="salary"> {{salary}} € </div> 
+							</h3>
+							<br>
+							<img ng-show="!unknownProfile" ng-src="{{getSpoImg(sex, spo)}}" style="width: 80%; height: 80%">
+
+							<div ng-show="unknownProfile" class="alert alert-danger">
+								Oups...
+								<p>
+									Malheureusement, ce profil n'est pas disponible dans notre base de données.
+								</p>
+								<p>
+									Certaines villes ou tranches d'âge comportent davantage de données (ex. : Paris, Marseille, plus de 30 ans). Vous pouvez refaire l'essai en modifiant la ville, l'âge ou le sexe.
+								</p>
+							</div> 
+
+							<br/>
+							<div ng-show="unknownProfile">
+								<img src="http://www.flaticon.com/png/256/43284.png">
+							</div>
+						</div>
+					</div>
+
+					<!--Champs modifiables-->
+					<div class="well2 col-md-3">
+						<div class="text-center">
+
+							<div class="question">
+								Et si {{sex}} {{name}}
+								<br>
+							</div> 	
+				  		   		  		
+				  			<h2>Habitait ailleurs ?</h2>
+				  			<br> 
+				  			<form class="form-inline" role="form" ng-submit="get_salary2()">
+					  			<div class="form-group">
+						  			<input class ="remplir" onClick="select()" ng-model="city_change" typeahead-min-length="3" typeahead="city as city.nom_comm for city in cities | filter:{nom_comm: $viewValue}" placeholder="Indiquez une commune"/>
+					  			</div>
+							</form>
+				  				  		
+				  			<h2>Était plus ou moins âgé(e) ?</h2> <br> 
+				  			<form class="form-inline" role="form" ng-submit="get_salary2()">
+					  			<div class="form-group">
+						  			<input class ="remplir" onClick="select()" ng-model="age_change" autofocus placeholder="Indiquez un chiffre"/>
+					  			</div>
+							</form>
+
+							<h2>Était ? </h2>
+							<br> 
+							<select class="btn btn-default" ng-model="sex_change">
+				  				<option value="Monsieur">Un homme</option>
+				  				<option value="Madame">Une femme</option>
+				  			</select> 
+
+							<h2>Changeait de métier ?</h2> 
+				  			<form class="form-inline" role="form" ng-submit="get_salary2()">
+					  			<div class="form-group">		 
+				  					<input class ="remplir" onClick="select()" ng-model="work_change" typeahead-min-length="3" typeahead="work as work.label for work in works() | filter:$viewValue" value=="{{work.label}}" placeholder="Indiquez un emploi"/>
+					  			</div>
+							</form>
+
+							<br>
+							<br>
+							<button class="large" 
+									ng-show="step >= 5"
+									ng-disabled="(step == 5 && !work_change) || (step == 5 && !city_change) (step == 5 && !age_change)"
+									ng-click="get_salary2()">Recalculer</button>
+							<br/>
+							<br/>
+							<button class="large" 
+									type="button"
+									ng-show="step >= 5"							
+									ng-click="step = 1">Revenir à la première étape</button>
+					 	</div>
+					</div>
+
+					<!--Fenêtre résultats 2-->
+					<div class="well2 col-md-4" ng-show="step == 6">
+						<div class="text-center">
+							<div id="background2">
+								<h3>
+									Le salaire mensuel de {{sex_change}} {{name}}, {{age_change}} ans, {{work_change.label}} à {{city_change.nom_comm}} serait d'environ 
+									<br> 
+									<br> 
+									<div ng-show="!unknownProfile2" class="salary"> {{salary2}} €</div> 
+								</h3> 
+
+								<img ng-show="!unknownProfile2" ng-src="{{getSpoImg(sex_change, spo_change)}}" style="width: 80%; height: 80%">
+
+
+								<div ng-show="unknownProfile2" class="alert alert-danger">
+									Oups...
+									<p>
+										Malheureusement, ce profil n'est pas disponible dans notre base de données.</p>
+									<p>
+										Certaines villes ou tranches d'âge comportent davantage de données (ex. : Paris, Marseille, plus de 30 ans). Vous pouvez refaire l'essai en modifiant la ville, l'âge ou le sexe.
+									</p>
+									</div> 
+
+								<br/>
+								<div ng-show="unknownProfile2">
+									<img src="http://www.flaticon.com/png/256/43284.png">
+									<br/>
+								</div>
+								<br/>
+							</div>
+						</div>
+					</div> 
+				</div>
+			</div>
+
+
+			<!--Bandeau ARTICLES formulaire 2-->
+			<div id="footer" ng-show="step >= 5">
+				<div class="articles">
+					<div class="row">		
+						
+						<div class="text-center col-md-3" >
+							<div ng-click="showPopUp1 = true" id="pointer">
+								<img src="images/eurobag.png" style="width: 30%;">
+								<p>L'argent, sujet tabou ?</p>
+							</div>
+						</div>
+
+						<div class="text-center col-md-3">
+							<div ng-click="showPopUp2 = true" id="pointer">
+								<img src="http://www.flaticon.com/png/256/23159.png" style="width: 30%;">
+								<p>Pourquoi les femmes gagnent moins que les hommes ?</p>
+							</div>
+						</div>
+
+						<div class="text-center col-md-3" >
+							<div ng-click="showPopUp3 = true" id="pointer">
+								<img src="images/jeunevieux.png" style="width: 30%;">
+								<p>Des inégalités selon l'âge</p>
+							</div>
+						</div>
+
+						<div class="text-center col-md-3" >
+							<div ng-click="showPopUp4 = true" id="pointer">
+								<img src="http://www.flaticon.com/png/256/23463.png" style="width: 30%;">
+								<p>Disparités géographiques</p>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+
+						<!--MISE EN FORME DES FENETRES POP-UP-->
+
+			<!--POP-UP 1 : ARGENT TABOU-->
+			<div class="modal" style="{{ showPopUp1 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp1 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">	
+
+						<div class="modal-header">
+							<button type="button" ng-click="showPopUp1 = false" class="close"  aria-hidden="true">&times;</button>
+							<img src="images/eurobag.png" style="width: 10%;">
+							<h3 class="modal-title">L'argent, sujet tabou ?</h3>
+						</div>
+
+						<div class="modal-body">
+
+							<p>Interview avec Jeanne Lazarus, sociologue, chargée de recherche au CNRS, membre du Centre de Sociologie des Organisations (Sciences-po). Elle travaille sur la relation entre les particuliers, l'argent et les banques. Elle est l’auteur de L’épreuve de l’argent (Calmann-Lévy 2012) et de  Sociologie de l’argent (La Découverte, 2007) en colaboration avec Damien de Blic. 
+
+							<h2>L'argent est-il un sujet tabou en France ?</h2>
+
+							<p>C’est un peu une idée répétée à l’envie en France. Je ne trouve pas que ce soit spécialement un sujet que les gens ne veulent pas aborder. On en parle partout, tout le temps. À la télévision, on parle de finances publiques, de prestations sociales. Cette idée du tabou de l’argent est utilisée par des gens qui veulent parler de l’argent ! Sarkozy répétait qu’il y avait un tabou de l’argent et en même temps il ne parlait que d’argent. L’argent est extrêmement présent, encore plus depuis une vingtaine d’années.</p>
+
+							<h2>Pourquoi ce sujet est-il plus courant ?</h2>
+
+							<p>Selon moi, cette accélération est liée aux transformations de la politique sociale. Avec un modèle d’état providence qui couvre les risques et des inégalités de salaires plus faibles, l’argent a moins d’importance pour s’estimer socialement. Les inégalités sociales étaient fondées mais sur des critères différents comme le capital culturel, transmission, l’héritage de position sociale plutôt que sur une distinction monétaire. Aujourd’hui nous faisons face à des inégalités plus fortes. L’argent qu’on possède a une importance beaucoup plus grande sur sa position dans la société.</p>
+
+							<h2>Dans d'autres pays, les salaires de chacun sont rendus publics, redéfinissant la notion de vie privée. Cela serait-il impossible en France ?</h2>
+
+							<p>Déclarer son salaire est un choix personnel. C'est un sujet qui permet des comparaisons assez brutales entre les gens et qui fait que ça peut provoquer des gênes dans les discussions. Certaines entreprises demandent aux salariés des clauses de non diffusion de leur salaire. Tout le monde fantasme sur le salaire du voisin en sous entendant que la rémunération est au mérite alors que ce sont des choses organisées. On imagine toujours qu'on est lésé, que sa situation est la pire. Au moment de payer des impôts, c'est assez frappant : quelle que soit la catégorie, les gens s’estiment dans la mauvaise catégorie. Ce sentiment d’être moins bien loti que son voisin est un sentiment assez répandu et assez facile à déclencher en France.</p>
+
+							<p class="signature">Propos recueillis par Lucille Quillet</p>
+
+
+						</div>
+
+						<div class="modal-footer">
+							<button type="button"  ng-click="showPopUp1 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+			    	</div>
+			  	</div>
+			</div>
+
+			<!--POP-UP 2 : DISPARITES SELON SEXE-->
+			<div class="modal" style="{{ showPopUp2 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;" ng-click="showPopUp2 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+			    	<div class="modal-content">
+
+			      		<div class="modal-header">
+					        <img src="http://www.flaticon.com/png/256/23159.png" style="width: 10%;">
+					        <button type="button" ng-click="showPopUp2 = false" class="close"  aria-hidden="true">&times;</button>
+					        <h3 class="modal-title">Pourquoi les femmes gagnent moins que les hommes ?</h3>
+			     		 </div>
+
+						<div class="modal-body">
+							<p>
+								447 euros. C’est la somme supplémentaire qu’empoche un homme chaque mois par rapport à une femme. Un chiffre qui signifie combien le rattrapage sur plusieurs décennies d’inégalités entre les sexes n’est toujours pas achevé en France. Certes, <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf%2520&sa=D&sntz=1&usg=AFQjCNFBli0dcql2plmrB09J8llm5VcmHw" target="_blank">66% des femmes travaillent</a> aujourd’hui contre 59% en 1990. Mais lorsque l’on compare les moyennes des salaires perçus par les femmes et ceux des hommes, un écart de <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.inegalites.fr%2Fspip.php%3Farticle972%26id_mot%3D104&sa=D&sntz=1&usg=AFQjCNGTpAeUq-ECF8xPBzWQ8GuvTCT6vA" target="_blank">24% persiste</a>. En transformant le temps partiel des femmes en équivalent temps plein, l’écart <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fthemes%2Ftableau.asp%3Freg_id%3D0%26ref_id%3DNATTEF04152&sa=D&sntz=1&usg=AFQjCNHwNEDDVYIJ61vOoZClPzI8fktNNg" target="_blank"> se réduit de19,3%</a> : l’homme touche 2312 euros et la femme, 1865 euros mensuels. Et ces inégalités, encore bien réelles sur le marché du travail, finissent par se répercuter sur le montant des retraites de la gente féminine, de <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf&sa=D&sntz=1&usg=AFQjCNGTS1RZlYCtQtj88--6dNPLYfc0Ig" target="_blank">31% inférieur aux hommes</a>.
+							</p>
+							<div class="text-center">
+								<img src="images/InfogDisparitesSexe.jpg" style="width: 70%;">
+							</div>
+							<h2>Les femmes gagnent moins car elles travaillent moins</h2> 
+							<p>
+								Deux tiers des femmes ont un emploi en France. Mais leur vie privée interfère bien plus dans les formes de leur travail que pour les hommes. Comme le précise un rapport de l’Insee, “les femmes sont beaucoup plus soumises aux contraintes liées à la conciliation entre vie familiale et vie professionnelle”.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span> Ainsi elles interrompent plus souvent leur carrière au moment d’avoir des enfants que les hommes. Les écarts d’activité entre les deux sexes sont plus importants aux âges où les personnes ont de jeunes enfants à charge, précise l’Insee. Entre 30 et 35 ans, <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf&sa=D&sntz=1&usg=AFQjCNGTS1RZlYCtQtj88--6dNPLYfc0Ig" target="_blank">18% des femme sont inactives</a>, contre 4% des hommes en 2010.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span> Les femmes sont plus souvent à temps partiel (<a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf&sa=D&sntz=1&usg=AFQjCNGTS1RZlYCtQtj88--6dNPLYfc0Ig" target="_blank">31%</a>) que leurs collègues masculins (7%) en 2010, alors qu’elles n’étaient que 24% à temps partiel en 1990.
+							</p>
+							<h2>Postes moins qualifiés et secteurs moins rémunérateurs</h2>
+							<br>
+							<div class="text-center">
+								<img src="images/lucilleinfo2.jpg" style="width:50%;">
+							</div>
+							<br/>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	Les femmes ne représentent que 39% des emplois de niveau cadre. Une progression lente puisqu’elles étaient 31% en 1990.  Plus on monte dans la hiérarchie, plus les femmes sont rares et les salaires, inégaux. Chez les cadres, une femme sera payée 21,8% de moins qu’un homme.
+
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	Les femmes occupent encore <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fthemes%2Fdocument.asp%3Fref_id%3Dip1436&sa=D&sntz=1&usg=AFQjCNELS5XxiS9G87bkGCudNFXkYo3Ojg" target="_blank">plus de 70%</a> des postes d’employés, qui correspondent aux niveaux de salaire parmi les plus bas.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	La mixité progresse surtout dans les métiers non-qualifiés, assurés <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf%2520&sa=D&sntz=1&usg=AFQjCNFBli0dcql2plmrB09J8llm5VcmHw" target="_blank">à hauteur de 62%</a> par les femmes. Qui sont donc les premières exposées au chômage en temps de crise.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	<a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fffc%2Fdocs_ffc%2Fref%2FFHPARIT12c_VE2activ.pdf&sa=D&sntz=1&usg=AFQjCNGTS1RZlYCtQtj88--6dNPLYfc0Ig" target="_blank">88% des femmes</a> travaillent dans le tertiaire, contre 64% des hommes. Or, c’est dans ce secteur que leur revenu salarial moyen est <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.insee.fr%2Ffr%2Fthemes%2Fdocument.asp%3Fref_id%3Dip1436&sa=D&sntz=1&usg=AFQjCNELS5XxiS9G87bkGCudNFXkYo3Ojg" target="_blank">inférieur de 27,5%</a> à celui des hommes, que le temps partiel est le plus fréquent concernant les métiers peu qualifiés.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	Les femmes représentent une large majorité des CDD (59%).
+							</p>
+							<h2>La discrimation pure existe bien</h2>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	En soustrayant les différences de temps de travail, de niveau de compétences et de CSP, femmes et hommes ne perçoivent toujours pas les mêmes salaires. Les revenus de deux individus ayant donc fait les mêmes études et ayant le même poste dans le même secteur -donc à égalité de situation- subissent <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.inegalites.fr%2Fspip.php%3Farticle972%26id_mot%3D104&sa=D&sntz=1&usg=AFQjCNGTpAeUq-ECF8xPBzWQ8GuvTCT6vA" target="_blank">un écart de 9%</a>, inexpliqué. “Cette différence de traitement se rapproche d’une mesure de la discrimination pure pratiquée par les employeurs à l’encontre des femmes”, explique l’Observatoire des inégalités.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span>	Les premiers adversaires que les femmes rencontrent au cours de leur ascension professionnelle sont souvent elles-mêmes. Les causes de cette autocensure peuvent être liées à la famille : les femmes craignent parfois de dépasser hiérarchiquement leur conjoint ou d’être perçues comme des carriéristes délaissant leur vie de famille. Les femmes dirigeantes sont rares, car, souvent, elles ne se pensent pas capables. Ainsi, une femme va attendre de correspondre à 80% des critères d’une annonce d’emploi pour postuler alors qu’un homme se jette à l’eau lorsqu’il remplit 25% des conditions selon Brigitte Laloupe, auteure de Pourquoi les femmes gagnent-elles moins que les hommes. Une fois en poste, elles sont victimes du syndrome des bonnes élèves : elles attendent d’être récompensées naturellement pour leur travail et savent moins se mettre en valeur ou demander une promotion qu’un homme.
+							</p>
+							<h4>Sources</h4>
+							<p class="sources">
+								<p><a href="http://www.insee.fr/fr/themes/tableau.asp?reg_id=0&amp;ref_id=NATTEF04152" target="_blank">Salaires mensuels moyens nets de tous prélèvements selon le sexe et la catégorie professionnelle en 2011</a>, Insee, DADS</p>
+								<p><a href="http://www.insee.fr/fr/ffc/docs_ffc/ref/FHPARIT12c_VE2activ.pdf" target="_blank">Activité, emploi, salaires et retraites : la convergence des situations entre hommes et femmes s’opère, mais parfois bien lentement</a>, Valérie Albouy, Zohor Djider, Alice Mainguené, Insee</p>
+								<p><a href="http://www.inegalites.fr/spip.php?article972&amp;id_mot=104" target="_blank">Les inégalités de salaires hommes-femmes : état des lieux</a>, Observatoire des inégalités.</p>
+								<p><a href="http://www.insee.fr/fr/ffc/ipweb/ip1436/ip1436.pdf" target="_blank">Le revenu salarial des femmes reste inférieur à celui des hommes, </a>Thomas Morin, Nathan Remila, Insee Premiere, mars 2013</p>
+							</p>
+							<p class="signature">Lucille Quillet</p>
+						</div>
+
+			      		<div class="modal-footer">
+			        		<button type="button"  ng-click="showPopUp2 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+			    		</div>
+			    	</div>
+			  	</div>
+			</div>
+
+			<!--POP-UP3 : DISPARITES SELON AGE-->		
+			<div class="modal" style="{{ showPopUp3 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp3 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">
+
+						<div class="modal-header">
+							<img src="images/jeunevieux.png" style="width: 10%;">
+							<button type="button" ng-click="showPopUp3 = false" class="close"  aria-hidden="true">&times;</button>
+							<h3 class="modal-title">Des inégalités selon l'âge</h3>
+						</div>
+
+						<div class="modal-body">
+							<p class="chapo">
+								Les jeunes gagnent en moyenne moins bien leur vie que les salariés plus âgés. L’âge a en effet un impact important sur l’évolution des salaires et donc sur les inégalités de rémunération.
+							</p>
+							<p>
+								Comparons à titre d’exemple le salaire net moyen de deux classes d’âge en 2010 : les 21-25 ans gagnaient en moyenne 16 399€ par an, tandis que la rémunération des 51-60 ans s’élevait à 29 054 €. En général le salaire moyen augmente à un rythme plus soutenu chez les plus jeunes, on observe ensuite un ralentissement à partir de la quarantaine. Mais après 55 ans, les courbes repartent à la hausse car les salariés les moins qualifiés partent souvent plus tôt à la retraite. Cette augmentation des salaires moyens ne signifie pas que les personnes agées de plus de 55 ans ont des revenus plus élevés que les autres. Au contraire, le départ à la retraite est souvent marqué par une diminution des ressources.
+							</p>
+							<div ng-if="showPopUp3" class="text-center">
+								<iframe src="http://e.infogr.am/evolution-du-salaire-annuel-en-fonction-de-lage" width="550" height="593" scrolling="no" frameborder="0" style="border:none;"></iframe>
+							</div>			
+							<h2>Les facteurs d’augmentation des salaires en fonction de l’âge</h2>
+							<h3><span class="glyphicon glyphicon-chevron-right"></span> Productivité</h3>
+							<p>
+								L’âge est corrélé à l’expérience professionnelle. Or, l’expérience permet généralement d’acquérir de nouvelles compétences et d’améliorer sa productivité. Selon <a href="http://www.insee.fr/fr/publications-et-services/docs_doc_travail/g2003-06.pdf" target="_blank">une étude de l’Insee</a> qui date de 2003 “la productivité croît avec l’âge jusqu’à 40 ans, puis se stabilise.
+								Un salarié plus âgé, fort de son expérience, de ses compétences et de sa productivité est également en mesure de mieux “se vendre” face à ses employeurs et donc de négocier son salaire à la hausse.
+							</p>
+							<h3><span class="glyphicon glyphicon-chevron-right"></span> Mobilité</h3>
+							<p>
+								Un autre facteur lié à l’âge intervient dans la détermination des salaires : la mobilité professionnelle. Le temps passé sur le marché du travail, en relation avec la productivité et les compétences, permet de recevoir de meilleures opportunités d’emploi. “Les travailleurs quittent progressivement les emplois les moins bien payés pour aller vers les mieux payés. C’est le canal de la mobilité professionnelle ascendante”, <a href="http://www.cairn.info/revue-francaise-d-economie-2012-1-page-163.htm" target="blank">explique Sarah Le Duigou, doctorante en économie</a>.Au cours du temps, et de l’âge des salariés, le rapport de force employés/employeurs évolue. “Les travailleurs gagnent en pouvoir de marché sur les entreprises qui sont contraintes d’offrir des salaires supérieurs pour les attirer”, écrit Sarah Le Duigou.
+							</p>
+							<h3><span class="glyphicon glyphicon-chevron-right"></span> Ancienneté</h3>
+							<p>
+								Dans certaines entreprises ou branches professionnelles il existe des grilles de salaires. C’est également le cas dans la fonction publique où des grilles indiciaires <a href="http://www.emploitheque.org/grille-indiciaire-etat.php" target="_blank">définissent le salaire selon le poste et l’échelon</a> qui est évolutif dans le temps. Ces différentes grilles prévoient des augmentations en fonction de l’ancienneté. Les salaires augmentent donc au fil du temps passé au sein de l’entreprise ou de l’institution.
+							</p>
+							<h3><span class="glyphicon glyphicon-chevron-right"></span> Effet de génération</h3>
+							<p>
+								Certaines différences de rémunération entre des salariés d’âges différents ne n’expliquent pas seulement par l’âge de l’individu, mais par d’autres facteurs qui ont trait à sa génération. Ainsi la période à laquelle l’employé entre sur le marché de travail et l’évolution du contexte économique au cours de sa carrière ont également un impact sur les différences salariales. Cela signifie qu’un salarié âgé aujourd’hui de 25 ans ne gagnera pas forcément autant dans 30 ans qu’un salarié qui a aujourd’hui 55 ans. Selon les conjonctures et les profils (formation, secteur d’activité…) les différentes générations connaissent des parcours plus ou moins favorables.
+							</p>
+							<h2>Une augmentation de salaire inégale selon la CSP</h2>
+							<p>
+								Globalement, les salaires augmentent en fonction de l’âge et de l’évolution du parcours professionnel du salarié. Cette tendance générale cache néanmoins de grandes disparités selon les catégories socio-professionnelles (CSP). Pour certaines d’entre elles, la hausse est minime. Ainsi, le salaire d’un ouvrier varie peu selon l’âge. En 2010, les moins de 29 ans gagnaient en moyenne 19 614€ tandis que le salaire moyen de la CSP atteint son maximum pour les 40-49 ans avec 20 722€. Les cadres constituent la CSP dont le salaire progresse le plus en fonction de l’âge. Il passe de 45 502€ pour les moins de 29 ans à 75 051€ pour les plus de 50 ans.
+							</p>
+							<div ng-if="showPopUp3" class="text-center">
+								<iframe src="http://e.infogr.am/evolution-des-salaires-en-fonction-de-lage-et-de-la-csp" width="550" height="713" scrolling="no" frameborder="0" style="border:none;"></iframe>
+							</div>
+							<h2>Les jeunes plus touchés par la précarité</h2>
+							<p>
+								Le type de contrat a également un impact sur les inégalités salariales en fonction de l’âge. Les jeunes sont ainsi les plus touchés par la précarité de l’emploi. En 2011, 55% des 15-29 ans étaient employés à l’aide d’un contrat dit précaire (intérim, CDD ou apprentissage), tandis que ce n’était le cas que de 8% des 30-49 ans et de 5% des 50 ans et plus. Sur le long terme, la tendance est plutôt à une augmentation de la précarité chez les jeunes. En 1980, seulement 17% des 15-29 ans avaient un emploi précaire, contre plus de la moitié aujourd’hui.
+							</p>
+							<p class="signature">Maïna Fauliot</p>
+						</div>
+
+						<div class="modal-footer">
+							<button type="button"  ng-click="showPopUp3 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+			    	</div>
+			  	</div>
+			</div>
+
+			<!--POP-UP 4 : DISPARITES GEOGRAPHIQUES-->				
+			<div class="modal" style="{{ showPopUp4 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp4 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">
+
+						<div class="modal-header">
+							<img src="http://www.flaticon.com/png/256/23463.png" style="width: 10%;">
+							<button type="button" ng-click="showPopUp4 = false" class="close"  aria-hidden="true">&times;</button>
+							<h3 class="modal-title">Disparités géographiques</h3>
+						</div>
+
+						<div class="modal-body">
+								<p>
+								Vous pensez tout savoir: les gens sont bien plus riches à Paris qu’en province, plus aisés en ville qu’à la campagne, etc. La réalité est plus complexe. Si on n’habite pas au même endroit, on n’aura pas forcément le même salaire, même si on fait le même métier. En comparant la moyenne des salaires ou le revenu médian, (le salaire tel que la moitié des salariés de la population considérée gagne moins et l'autre moitié gagne plus), on constate de nombreuses inégalités salariales en France. A partir des chiffres de l’Insee et de conclusions de l’Observatoire des inégalités, voici un aperçu de ces disparités territoriales.  
+								</p>
+
+								<h2><span class="glyphicon glyphicon-chevron-right"></span> La ville est plus riche que la campagne, en moyenne</h2> 
+
+								<p>
+								En moyenne au niveau national, les salaires médians sont plus élevés en ville. Cela signifie qu’en ville, la personne médiante (qui sépare donc la population en deux) gagne <strong>19 200 euros annuels, soit 400€ de plus que la même personne à la campagne</strong>. Mais au cas par cas, la situation peut être différente. Dans près de la moitié des régions (Champagne-Ardenne, Ile-de-France, Haute-Normandie notamment), le niveau de vie des ruraux dépasse celui des urbains. Dans une autre moitié, c’est l’inverse (Aquitaine, Limousin, Midi-Pyrénées par exemple). Selon les régions et les situations, le rapport entre ville et campagne varie. 
+								</p>
+								<p>
+								Les villes sont des milieux très inégalitaires. Les centres-villes concentrent généralement les personnes aux revenus les plus élevés. Les quartiers environnants accueillent parfois des personnes au niveau de vie bien inférieur que l’on trouve notamment “dans les quartiers d’habitat social”. En général toutefois, les personnes aux revenus les plus faibles vivent dans le monde rural “éloigné et vieillissant”. 
+								</p>
+								<p>
+								“Le monde rural dispose en moyenne de revenus inférieurs, mais les taux de pauvreté y sont moins élevés” expliquait l’Observatoire des inégalités dans un article en février 2013. Mais <strong>certaines régions de campagne concentrent beaucoup d’habitants très pauvres</strong> comme l’Auvergne, le Limousin et la Bretagne ou la pauvreté rurale est bien plus marquée qu’en ville. Cette différence s’explique notamment parce que ces régions comprennent plus de faibles revenus car elles concentrent des populations d’agriculteurs âgés avec des pensions de retraite très faibles.
+								</p> 
+								<p>
+								Entre les deux, <strong>l’espace périurbain rassemble un grand nombre de classes moyennes</strong>. C’est dans cet espace pavillonnaire que les salaires sont, en moyenne et au niveau national, les plus élevés. Le niveau de vie moyen de l’espace périurbain s’élève à 19 700 euros, contre 19 300 dans les grands pôles urbains, soit un écart moyen de 2 %, similaire à celui qui existe entre la ville et la campagne au niveau national. “La France « périphérique » ou pavillonnaire compte beaucoup moins de pauvres et d’inégalités que les centres-villes, entre leurs quartiers huppés et leur périphérie proche” rapporte l’Observatoire des inégalités.
+								</p>
+
+								<h2><span class="glyphicon glyphicon-chevron-right"></span> Richesse et pauvreté : l’Île-de-France bat tous les records</h2> 
+
+								<p>
+								L’Île-de-France est la région des extrêmes. Un ménage sur deux y déclare des revenus fiscaux supérieurs à 1 816 € par mois, ce qui est le revenu médian le plus élevé de France métropolitaine. Du fait de ces revenus plus élevés, sept ménages franciliens sur dix sont imposables contre moins de six sur dix en province. Les populations aisées d’Île-de-France sont donc <strong>les plus aisées de France</strong>. 
+								</p>
+								<p>
+								En revanche, avec des revenus de 547 € par mois, les revenus des 10% les plus pauvres de cette région sont parmi les plus faibles. Ce qui fait de l’Île-de-France <strong>la région la plus inégalitaire de France</strong>. Si l’on s’intéresse à la ville de Paris, on remarque que le revenu des ménages les plus aisés est le plus élevé de France métropolitaine ; mais le revenu des ménages les plus modestes y est le plus faible de la région après celui de la Seine-Saint-Denis. 
+								</p>
+								<p>
+								Autre particularité de la région, le salaire des cadres. Cette catégorie de salariés gagne en moyenne beaucoup plus d’argent dans la région Île-de-France qu’ailleurs en France. Dans cette région, les cadres percevaient en 2010 un salaire net annuel moyen de 53 490 euros contre 39 630 en Languedoc-Roussillon, par exemple. Pour l'ensemble des salariés, l'Ile-de-France est en tête (31 960 euros) loin devant la Bretagne (21 700 euros). Selon le dernier rapport <a href="http://www.insee.fr/fr/publications-et-services/sommaire.asp?codesage=EMPSAL13" target="_blank">“Emploi et salaires” de l’Insee</a>, qui porte sur les chiffres de l’année 2010, "les régions où le salaire moyen est le plus faible sont celles où les cadres sont les moins nombreux, comme le Poitou-Charentes, le Limousin, ou la Basse-Normandie". 
+								</p>
+
+								<h2><span class="glyphicon glyphicon-chevron-right"></span> Les villes sont plus ou moins (in)égalitaires</h2> 
+								<p>
+								Neuilly-sur-Seine est la ville la plus inégalitaire de France. C’est la conclusion de l’Observatoire des inégalités, qui a mené une étude présentée en mars 2014 en partenariat avec le Compas, un bureau d’étude spécialiste des données sociales locales qui prend comme source les revenus 2010 dans les villes de plus de 10,000 habitants. La méthode de comparaison est le coefficient de Gini (*) et elle est faite avant redistribution. La ville des Hauts-de-Seine obtient un coefficient de 0,53, coefficient le plus élevé en France alors que le coefficient moyen est de 0,38. (Plus le coefficient, calculé entre 0 et 1, se rapproche de 1, plus une ville est inégalitaire). Au contraire, la ville la plus égalitaire de France est Plouzané, commune de 11 000 habitants de la banlieue brestoise, avec un coefficient de 0,26.
+								</p>
+								<p>
+								L’étude en tire plusieurs enseignements. Premièrement, <strong>plus une ville est grande, plus elle est inégalitaire</strong>. Ce constat est fait car parmi les 50 villes les plus égalitaires, seules deux font plus de 30 000 habitants (Montigny-le-Bretonneux en banlieue parisienne et Rezé près de Nantes). Au contraire, dans les villes les plus inégalitaires, on trouve peu de petite ville, et celles que l’on trouvent sont de riches villes de l’Ouest parisien (Le Vésinet, Saint-Cloud) où les inégalités sont accentuées du fait des très hauts revenus de la majorité de ces habitants.   
+								</p>
+								<p>
+								Les villes riches peuvent être inégalitaires. Et des villes très pauvres être très égalitaires. Dans le classement de l’Observatoires des inégalités, on trouve donc des villes comme Neuilly, le Vésinet et Boulogne Billancourt, qui ont des revenus moyens très élevés et qui se révèlent particulièrement inégalitaires avec des coefficients de Gini compris entre 0.43 et 0.45. Mais aussi des villes comme Grand-Quevilly (0,26) près de Rouen, Gerzat (0,28) en banlieue de Clermont-Ferrand ou Trélazé (0,29) à l’est d’Angers, qui ont des revenus médians modestes mais ou les inégalités sont très faibles. 
+								</p>
+								<h2>Des différences souvent gommées par les niveaux de vie </h2> 
+								<p>
+								“Un univers sépare le Vésinet de Maubeuge” conclut l’Observatoire des inégalités. Cette phrase, qui ne préjuge pas de la qualité de vie dans ces deux communes, indique bien que les situations dans les villes de France sont très variables. Si les revenus y sont très différents, les niveaux de vie varient également. Le niveau de vie moyen correspond aux revenus déclarés (salaires, retraite, revenus du patrimoine, indemnités de chômage…) et aux prestations sociales reçues nets des prélèvements obligatoires. <strong>En France, le niveau de vie annuel moyen est de 23 255 euros</strong> selon les chiffres de l’Insee. Mais seules les régions Rhône-Alpes (23 951), l’Alsace (24 045) et le mastodonte Île-de-France (27 566€) sont au-dessus de cette moyenne.  
+								</p>
+								L’Île-de-France pèse d’ailleurs considérablement. Le niveau de vie moyen de la France de province, c’est-à-dire la France métropolitaine moins l’Île-de-France, est de 22 252 euros. Si les salaires sont bien plus conséquents dans cette région, le coût de la vie y est également bien plus élevé qu’ailleurs.     
+								<p>
+								*Le coefficient de Gini compare la distribution des revenus dans le territoire à une distribution égale. Plus il est proche de zéro, plus on est proche de l’égalité. Plus il est proche de 1, plus les revenus sont inégaux.
+								</p>	
+								<h4>Sources</h4>
+								<p class="sources">
+								<p><a ref="http://www.insee.fr/fr/themes/theme.asp?theme=4&sous_theme=1&type=2&type=3&type=1&nivgeo=99&produit=OK" target="_blank">Salaires et revenus d'activités</a>, Insee</p>
+								<p><a href="http://www.insee.fr/fr/themes/theme.asp?theme=4&sous_theme=2&type=2&type=3&type=1&nivgeo=99&produit=OK" target="_blank">Revenus - Niveaux de vie - Patrimoine </a>, Insee</p>
+								<p><a href="http://www.insee.fr/fr/publications-et-services/sommaire.asp?codesage=EMPSAL13" target="_blank">Emploi et salaires - Insee Références - Édition 2013 </a>, Insee.</p>
+								<p><a href="https://www.alternatives-economiques.fr/les-inegalites-en-france_fr_pub_1159.html" target="_blank">Les inégalités en France </a>, Alternatives économiques</p>
+								<p><a href="http://www.regionsjob.com/actualites/inegalites-salariales-l-etat-des-lieux-en-france-18042" target="_blank">Inégalités salariales : l'état des lieux en France</a>, Régions jobs</p>
+
+								<p class="signature">Paul de Coustin</p>
+						</div>
+
+							<div class="modal-footer">
+							<button type="button"  ng-click="showPopUp4 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+			    	</div>
+			  	</div>
+			</div>
+
+
+						<!--Bandeau CREDITS-->
+
+			<!--Bandeau formulaire 2-->
+				<div class="container" id="bandeaucredits2" ng-show="step >= 5">
+
+					<div class="credits">
+				      	<div ng-click="$parent.showPopUp11 = true" id="pointer" tooltip-placement="top" tooltip="L'équipe derrière l'appli !">
+								<img src="http://www.flaticon.com/png/256/24188.png" style="width: 20%;">
+								<p><h6>Crédits</h6></p>
+						</div>
+					</div>
+					
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp10 = true" id="pointer" tooltip-placement="top" tooltip="Comment nous avons calculé ?">
+								<img src="http://www.flaticon.com/png/256/3711.png" style="width: 20%;">
+								<p><h6>Méthodologie</h6></p>
+						</div>
+					</div>
+
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp12 = true" id="pointer" tooltip-placement="top" tooltip="Consultez les métiers disponibles pour votre voisin" >
+								<img src="http://www.flaticon.com/png/256/13718.png" style="width: 20%;">
+								<p><h6>Nos métiers</h6></p>
+						</div>
+					</div>
+
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp13 = true" id="pointer" tooltip-placement="top" tooltip="Pourquoi ce projet ?" >
+								<img src="http://www.flaticon.com/png/256/27720.png" style="width: 22%;">
+								<p><h6>A propos</h6></p>
+						</div>
+					</div>
+				</div>
+
+			<!--Bandeau formulaire 1-->
+			<div ng-show="step < 5">
+				<div class="container" id="footerformulaire">
+
+					<div class="credits">
+				      	<div ng-click="$parent.showPopUp11 = true" id="pointer" tooltip-placement="top" tooltip="L'équipe derrière l'appli">
+								<img src="http://www.flaticon.com/png/256/24188.png" style="width: 22%;">
+								<h6><p>Crédits</p></h6>
+						</div>
+						
+					</div>
+
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp10 = true" id="pointer" tooltip-placement="top" tooltip="Comment nous avons calculé ?">
+								<img src="http://www.flaticon.com/png/256/3711.png" style="width: 23%;">
+								<h6><p>Méthodologie</p></h6>
+						</div>
+					</div>
+
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp12 = true" id="pointer" tooltip-placement="top" tooltip="Consultez les métiers disponibles pour votre voisin" >
+								<img src="images/settings.png" style="width: 20%;">
+								<h6><p>Nos métiers</p></h6>
+						</div>
+					</div>
+
+					<div class="credits">
+				       	<div ng-click="$parent.showPopUp13 = true" id="pointer" tooltip-placement="top" tooltip="Pourquoi ce projet ?" >
+								<img src="http://www.flaticon.com/png/256/27720.png" style="width: 22%;">
+								<p><h6>A propos</h6></p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!--POP-UP 10 : METHODOLOGIE-->
+			<div class="modal" style="{{ showPopUp10 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp10 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+					<div class="modal-content">
+
+						<div class="modal-header">
+					    	<button type="button" ng-click="showPopUp10 = false" class="close"  aria-hidden="true">&times;</button>
+							<h3 class="modal-title">Méthodologie</h3>
+						</div>
+						
+						<div class="modal-body">
+							<h2>Données personnelles</h2>
+							<p>
+								A savoir : L’application COMBIEN GAGNE MON VOISIN ? n'enregistre aucune des données renseignées lors de son utilisation.
+							</p>
+							<h2>Méthodologie</h2>
+							<p>
+								Cette application interactive calcule une estimation des <strong>salaires mensuels nets</strong> selon le sexe, l’âge, la profession et le lieu de résidence. Il s’agit d’une estimation donnée à titre indicatif, qui peut contenir des incohérences. L’estimation s’appuie sur <strong>deux bases de données</strong> indépendantes utilisant les mêmes données de base de l’Insee sur les salaires en 2010 (la base de données DADS, voir plus bas).
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span> La première base de données utilisée par COMBIEN GAGNE MON VOISIN ? contient le salaire médian pour chaque sexe, dix catégories d’âge et pour 412 professions, dans chacune des 22 régions de France métropolitaine.
+							</p>
+							<p>
+								<span class="glyphicon glyphicon-chevron-right"></span> La deuxième base de données contient les salaires moyens pour chaque sexe et cinq catégories socio-professionnelles (cadre, profession intermédiaire, employé, ouvrier qualifié, ouvrier non-qualifié) dans les villes de plus de 2000 habitants, soit 4978 communes de France métropolitaine.
+							</p>
+							<h2>Le principe d'estimation</h2>
+							<p>
+								COMBIEN GAGNE MON VOISIN ? utilise le salaire médian annuel en <strong>équivalent-temps plein</strong> pour chaque sexe, profession, catégorie d’âge et région de France métropolitaine. Autrement dit, le résultat représente une estimation du salaire pour quelqu’un travaillant à temps plein.
+							</p>
+							<p>
+								Ce premier résultat a été pondéré, afin de prendre en compte les disparités salariales géographiques au sein d’une même région. Pour cela, nous avons <strong>établi un coefficient</strong> qui correspond au ratio entre la moyenne communale de salaire pour chaque sexe et catégorie socioprofessionnelle, et la moyenne régionale de salaire pour chaque sexe et catégorie socioprofessionnelle.
+							</p>
+							<p>
+								Pour les communes de moins de 2000 habitants, pour lesquelles nous ne disposions pas des données nécessaires, le résultat affiché représente le <strong>salaire médian régional</strong> selon le sexe, l’âge et la profession.
+							</p>
+							<p>
+								De même, en ce qui concerne les professions relevant de la catégorie socio-professionnelle “Chefs d’entreprise et artisans” ou “Agriculteurs”, l’application ne peut pas fournir une estimation en fonction de la commune. Dans ce cas, le salaire médian régional est proposé.
+							</p>
+							<h2>La source : la DADS</h2>
+							<p>
+								La déclaration annuelle de données sociales (DADS) est un document que doivent remplir toutes les entreprises privées, ainsi que les administrations et les établissements publics, indiquant pour chacun de leurs salariés sa catégorie socioprofessionnelle et le montant des rémunérations salariales versées. Après anonymisation des établissements et des personnes, l'Insee publie des indicateurs de salaire moyen, médian ou de dispersion, en fonction des caractéristiques socio-démographiques, géographiques et de celles des emplois occupés. Pour cette application, les dernières données utilisées sont celles de 2010.
+							</p>
+							<h2>Les catégories socioprofessionnelles</h2>
+							<p>
+								Les dénominations de métiers utilisées sont celles de la nomenclature des <a href="http://www.insee.fr/fr/methodes/default.asp?page=nomenclatures/pcses/pcses.htm" target="_blank">“Professions et Catégories Socioprofessionnelles ES de niveaux 2 et 3”</a>, soit 29 postes de niveau 2 et 412 postes du niveau 3.
+							</p>
+							<h4>Sources</h4>
+							<p class="sources">
+								<a href="http://www.insee.fr/fr/methodes/default.asp?page=sources/ope-adm-dads.htm" target="_blank">Insee – DADS</a> à travers FranceTVinfo
+							</p>
+							<p class="sources">
+								<a href="http://www.insee.fr/fr/themes/detail.asp?reg_id=99&ref_id=base-cc-salaire-net-horaire-moyen" target="_blank">Insee – Salaire net horaire moyen selon la catégorie socioprofessionnelle, le temps de travail et l'âge en 2010</a>
+							</p>
+						</div>
+
+						<div class="modal-footer">
+					    	<button type="button"  ng-click="showPopUp10 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+				    </div>
+				</div>
+			</div>
+
+			<!--POP-UP 11 : CREDITS-->
+			<div class="modal" style="{{ showPopUp11 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp11 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">
+				    	<div class="modal-header">
+							<button type="button" ng-click="showPopUp11 = false" class="close"  aria-hidden="true">&times;</button>
+				        	<h3 class="modal-title">Crédits</h3>
+						</div>
+
+						<div class="modal-body">
+						<div class="text-center">
+							<p><strong>Conception éditoriale</strong><br>
+
+							Florencia Rovira Torres <a href="https://twitter.com/froviratorres" target="_blank">@froviratorres</a><br>
+
+							Camilo Moreno Kuratomi <a href="https://twitter.com/CMorenoK" target="_blank">@CMorenoK</a><br>
+
+							Maïna Fauliot <a href="https://twitter.com/MainaFauliot" target="_blank">@MainaFauliot</a><br><br>
+
+							<strong>Chefs de projet web</strong><br>
+
+							Camilo Moreno Kuratomi<br>
+
+							Florencia Rovira Torres<br><br>
+
+							<strong>Data-conception</strong><br>
+
+							Florencia Rovira Torres<br><br>
+
+							<strong>Développement</strong><br>
+
+							Camilo Moreno Kuratomi<br>
+
+							Blandine Le Cain <a href="https://twitter.com/blandinelc" target="_blank">@blandinelc</a><br><br>
+
+							<strong>Design-conception</strong><br>
+
+							Camilo Moreno Kuratomi<br>
+
+							Florencia Rovira Torres<br>
+
+							Blandine Le Cain<br><br>
+
+							<strong>Contenu éditorial et infographies</strong><br>
+
+							Maïna Fauliot<br>
+
+							Lucile Quillet <a href="https://twitter.com/Lucile_Quillet" target="_blank">@Lucile_Quillet</a><br>
+
+							Paul de Coustin <a href="http://twitter.com/pauldecoustin" target="_blank">@PauldeCoustin</a><br><br>
+
+							<strong>Communication</strong><br>
+
+							Maïna Fauliot<br>
+
+							Lucile Quillet<br>
+
+							<h4>Remerciements</h4>
+
+							Pierre Romera (Journalism++), collaborateur développement.<br>
+
+							Karen Bastien (WeDoData)<br>
+
+							Célia Meriguet (FranceTVinfo)<br>
+
+							Thibaud Vuitton (FranceTVinfo)<br>
+
+							Damien Van Achter (lab.davanac)
+												
+							<h4>Références des sites utilisés</h4>
+							<p>
+								Banque d'images : <a href="http://www.flaticon.com" target="_blank">Flaticon.com</a>
+							</p>
+							<p>
+								Infrographies : <a href="http://infogr.am/" target="_blank">Infogr.am</a>
+							</p>
+							<p>
+								Outil couleur : <a href="http://ie.microsoft.com/TEStdrive/Graphics/CSSGradientBackgroundMaker/Default.html" target="_blank">CSS Gradient Background Maker</a>
+							</p>
+							<p>
+								Outil de partage : <a href="https://www.sharethis.com/" target="_blank">ShareThis</a>
+							</p>
+						</div>
+						</div>
+						<div class="modal-footer">
+				      		<button type="button"  ng-click="showPopUp11 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+			    	</div>
+			  	</div>
+			</div>
+
+			<!--POP-UP 12 : METIERS-->
+			<div class="modal" style="{{ showPopUp12 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp12 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">
+				    	
+				    	<div class="modal-header">
+							<button type="button" ng-click="showPopUp12 = false" class="close"  aria-hidden="true">&times;</button>
+							<h3 class="modal-title">Les métiers disponibles</h3>
+				        </div>
+
+						<div class="modal-body" ng-if="showPopUp12">
+						  <iframe src="https://charts.datawrapper.de/0VD81/index.html" allowfullscreen="" webkitallowfullscreen="" mozallowfullscreen="" oallowfullscreen="" msallowfullscreen="" class="DRAGDIS_iframe" style="width: 100%; height: 500px; background-color: rgb(255, 255, 255); border: 10px solid rgb(255, 255, 255); border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; background-position: initial initial; background-repeat: initial initial;"></iframe>
+						</div>
+						
+						<div class="modal-footer">
+				      		<button type="button"  ng-click="showPopUp12 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+
+			    	</div>
+			  	</div>
+			</div>
+
+			<!--POP-UP 13 : A PROPOS-->
+			<div class="modal" style="{{ showPopUp13 && 'display: block' }}" tabindex="-1" role="dialog">
+				<div class="text-right">
+					<button type="button" style="margin-top: 30px; margin-right: 30px;"  ng-click="showPopUp13 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+
+				<div class="modal-dialog">
+				    <div class="modal-content">
+				    	
+				    	<div class="modal-header">
+							<button type="button" ng-click="showPopUp13 = false" class="close"  aria-hidden="true">&times;</button>
+							<h3 class="modal-title">A propos</h3>
+				        </div>
+
+						<div class="modal-body" ng-if="showPopUp13">
+						<div class="text-center">
+							<h2>COMBIEN GAGNE MON VOISIN ? </h2>  
+							<h2>Explorez les disparités salariales en France</h2><br>
+						</div>
+							<p class="chapo">
+								Qui n’a jamais voulu connaître le salaire de son ami, collègue ou voisin ? Qui ne se laisse pas piquer de curiosité à l’idée de savoir combien il gagnerait s’il n’habitait pas à Paris mais à Thionville ? L’application web <strong>Combien gagne mon voisin ?</strong> répond à toutes ces interrogations, en se basant sur des données de l’INSEE. 
+							</p>
+
+							<p>
+								Les étudiants en deuxième année à l’Ecole de journalisme de Sciences Po ont lancé en avril 2014 le site : <strong>Combien gagne mon voisin ?</strong>. Cette application web est un outil pratique d’estimation et de comparaison des salaires selon le métier, l’âge, le sexe et le lieu de résidence, mettant ainsi en lumière les inégalités de genre, de génération et de territoire.
+							</p>
+							<p>
+								L’expérience que le site propose est ludique, tout en menant l’internaute à la réflexion. Le principe de navigation est très simple : on entre le nom, le sexe, l’âge, le métier et le lieu de résidence de la personne dont on veut connaître le salaire. Une fois ce premier profil créé, on découvre le montant du salaire. Après avoir obtenu ce résultat, l’utilisateur peut créer en parallèle un autre profil pour le comparer avec le premier, en modifiant un ou plusieurs critères. 
+							</p>
+							<p>
+								En accompagnement, <strong>Combien gagne mon voisin</strong> propose un corpus d’articles explicatifs sur les inégalités salariales en fonction du genre, du territoire, de l’âge et de la génération.
+							</p>
+
+							<p>
+								Ce projet a été créé de A à Z par six étudiants de l’Ecole de journalisme de Sciences Po, de la recherche des données INSEE (5 000 communes, 22 régions, 412 professions...), au graphisme et code, en passant par la rédaction des contenus. Le tout en 12 semaines.
+							</p>
+							<p>
+							<strong>Suivez-nous sur twitter </strong> : <a href="https://twitter.com/Mon_voisin" target="_blank">@Mon_voisin <br></a>
+							<strong>Suivez-nous sur </strong><a href="https://www.facebook.com/sitecombiengagnemonvoisin" target="_blank">facebook </a><br>
+							<strong>#CombienGagneMonVoisin</strong> 
+							</p>
+
+
+						</div>
+						
+						<div class="modal-footer">
+				      		<button type="button"  ng-click="showPopUp13 = false"  class="btn btn-default" data-dismiss="modal">Fermer</button>
+						</div>
+
+			    	</div>
+			  	</div>
+			</div>
+			
+		</div>
+	</div>
+
+		<!--PARTAGE-->
+		<script type="text/javascript">stLight.options({publisher: "b5607739-c884-44a8-b617-eae8d563aee6", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+		<script>
+		var options={ "publisher": "b5607739-c884-44a8-b617-eae8d563aee6", "position": "left", "ad": { "visible": false, "openDelay": 5, "closeDelay": 0}, "chicklets": { "items": ["facebook", "twitter", "email", "googleplus"]}};
+		var st_hover_widget = new sharethis.widgets.hoverbuttons(options);
+		</script>
+
+
+</body>			
+
+</html>
